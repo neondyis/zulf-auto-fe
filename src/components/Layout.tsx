@@ -5,8 +5,10 @@ import { useRouter } from 'next/router';
 import React from "react";
 import Head from "next/head";
 import {Box, Flex, useColorModeValue} from "@chakra-ui/react";
+import {useAuth} from '@/contexts/AuthContext';
 
 function Layout ({ children }:any)  {
+    const { isAuthenticated} = useAuth();
     const router = useRouter();
     const onPageEnter = (node: gsap.TweenTarget) => {
         gsap.fromTo(
@@ -51,7 +53,7 @@ function Layout ({ children }:any)  {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <div>
-                <Header/>
+                {isAuthenticated &&  <Header/>}
                 <SwitchTransition>
                     <Transition
                         key={router.asPath} // our route as a key

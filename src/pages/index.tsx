@@ -1,5 +1,4 @@
 import {
-  Card, CardBody,
   Flex,
   Stat,
   StatArrow,
@@ -9,15 +8,18 @@ import {
 } from "@chakra-ui/react";
 import React from 'react';
 import DashboardCard from '@/components/DashboardCard';
-import ReactECharts from 'echarts-for-react';
 import {LinearGradient} from 'zrender';
 import darkTheme from '@/themes/charts/dark'
 import {registerTheme} from 'echarts';
 import FinancialOverviewChart from '@/components/FinancialOverviewChart';
+import {useAuth} from '@/contexts/AuthContext';
+import {useRouter} from 'next/router';
 
 
 
 export default function Home() {
+  const { token, isAuthenticated, isLoaded} = useAuth();
+  const router = useRouter()
   const options = {
     color: ['#80FFA5', '#00DDFF', '#37A2FF', '#FF0087', '#FFBF00'],
     title: {
@@ -202,6 +204,7 @@ export default function Home() {
       }
     ]
   };
+
   registerTheme('zulf_dark', darkTheme);
 
   return (

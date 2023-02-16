@@ -12,16 +12,31 @@ import {
     Text,
     useColorModeValue
 } from '@chakra-ui/react';
+import axios from 'axios';
+import {useState} from 'react';
+import {useAuth} from '@/contexts/AuthContext';
 
 export default function Login() {
-    const titleColor = "white";
-    const textColor = "gray.400";
+    const { updateToken} = useAuth();
+    const [username,setUsername] = useState('');
+    const [password,setPassword] = useState('');
+
+    const login = async () => {
+        await axios.post('http://localhost:8080/api/auth/login', {username: username, password: password})
+            .then(res => {
+                // @ts-ignore
+                updateToken(res.headers.get('authorization'))
+            }).catch(err => {
+                console.log(err)
+        })
+    }
 
     return (
         <Flex
             minH={'100vh'}
             align={'center'}
             justify={'center'}
+            direction={'column'} width={'100%'}
             bg={useColorModeValue('background.900', 'background.50')}>
             <Stack spacing={8} mx={'auto'} maxW={'lg'} py={12} px={6}>
                 <Stack align={'center'}>
@@ -35,11 +50,11 @@ export default function Login() {
                     <Stack spacing={4}>
                         <FormControl id="username">
                             <FormLabel>Username</FormLabel>
-                            <Input type="text" />
+                            <Input value={username} onChange={e => setUsername(e.target.value)} type="text" />
                         </FormControl>
                         <FormControl id="password">
                             <FormLabel>Password</FormLabel>
-                            <Input type="password" />
+                            <Input value={password} onChange={e => setPassword(e.target.value)} type="password" />
                         </FormControl>
                         <Stack spacing={10}>
                             <Stack
@@ -52,6 +67,7 @@ export default function Login() {
                             <Button
                                 bg={'blue.400'}
                                 color={'white'}
+                                onClick={login}
                                 _hover={{
                                     bg: 'blue.500',
                                 }}>

@@ -184,7 +184,6 @@ export const CustomTable = ({...props}: TableProps<Object>) => {
         resizableRows:false,
         renderHorizontal:"virtual",
         maxHeight: '100%',
-        maxWidth: '100%',
         placeholder:"No Data Available",
     };
 
