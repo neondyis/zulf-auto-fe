@@ -41,9 +41,11 @@ export default function Header () {
                     finalFocusRef={btnRef.current}
                 >
                     <DrawerOverlay />
-                    <DrawerContent>
+                    <DrawerContent borderRadius={'0px 25px 25px 0px'} bgColor={'#131517'} color={'#F0EFF4'}>
                         <DrawerHeader>
-
+                            <Text>
+                                Navigation
+                            </Text>
                         </DrawerHeader>
                         <DrawerBody>
                             <Flex direction={"column"}>
@@ -79,9 +81,8 @@ export default function Header () {
                         </DrawerBody>
                         <DrawerFooter>
                             <Button variant='outline' mr={3} onClick={onClose}>
-                                Cancel
+                                Logout
                             </Button>
-                            <Button colorScheme='blue'>Save</Button>
                         </DrawerFooter>
                     </DrawerContent>
                 </Drawer>

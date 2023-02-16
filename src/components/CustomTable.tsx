@@ -1,30 +1,32 @@
-import {useEffect, useState} from "react";
+import {SetStateAction, useEffect, useState} from "react";
 import {
+    Box,
+    Button,
     Card,
-    Input,
-    TableCaption,
-    TableContainer,
-    Th,
-    Table,
-    Thead,
-    Tr,
-    Text,
-    useDisclosure,
-    useToast,
-    Tbody,
-    Td,
-    ButtonGroup,
+    CardBody,
+    CardHeader,
+    Flex,
+    FormControl,
+    FormErrorMessage,
+    FormLabel,
     IconButton,
-    Tfoot,
+    Input,
     Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
+    ModalBody,
     ModalCloseButton,
-    ModalBody, FormControl, FormLabel, FormErrorMessage, ModalFooter, Button, CardBody, Skeleton, CardHeader, Flex
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+    useDisclosure,
+    useToast
 } from "@chakra-ui/react";
 import {AddIcon, DeleteIcon, EditIcon} from "@chakra-ui/icons";
-
+import {ReactTabulator} from 'react-tabulator';
+import {Tabulator} from 'react-tabulator/lib/types/TabulatorTypes';
+import ColumnDefinition = Tabulator.ColumnDefinition;
+import "react-tabulator/lib/styles.css";
+import "react-tabulator/css/tabulator_midnight.min.css";
 
 type TableProps<T> = {
     message: string;
@@ -33,13 +35,13 @@ type TableProps<T> = {
 }
 
 export const CustomTable = ({...props}: TableProps<Object>) => {
-    const noDataMessage = props.message;
-    const caption = props.caption;
+    const {caption, message, list} = props;
     const [data, setData] = useState([]); // initial data for the table
     const [editData, setEditData] = useState({});
     const [filteredData, setFilteredData] = useState([...data]); // filtered data for the table
     const [filterValues, setFilterValues] = useState({});
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const {isOpen, onOpen, onClose} = useDisclosure();
+    const [columns, setColumns] = useState<ColumnDefinition[]>([])
     const toast = useToast();
 
     const closeModal = () => {
@@ -47,16 +49,23 @@ export const CustomTable = ({...props}: TableProps<Object>) => {
         onClose();
     };
 
-    const copyKeys = async (obj: Object, newObj:Object) => {
+    const copyKeys = async (obj: Object, newObj: Object) => {
+        const tempColumns: ColumnDefinition[] = [];
         Object.assign(newObj, Object.keys(obj).reduce((result:Object, key) => {
             if(key !=='__typename'){
                 // @ts-ignore
                 result[key] = "";
+                tempColumns.push({
+                    title: key, field: key, hozAlign: "center",
+                    headerFilter: "input", resizable:false, minWidth:200,
+                    cellClick:function (e,cell){editRow(cell.getData())}})
+                console.log(key)
                 return result;
             }else{
                 return result;
             }
         }, {}));
+        setColumns(tempColumns);
     }
     const handleFilterChange = (event:any) => {
         const { name, value } = event.target;
@@ -161,111 +170,45 @@ export const CustomTable = ({...props}: TableProps<Object>) => {
                 setFilterValues(filterKeys);
             });
         }
-        if(props.list.length > 0 && data.length === 0){
+        if(list.length > 0 && data.length === 0){
             // @ts-ignore
-            setData([...props.list]);
+            setData([...list]);
         }
-        if(props.list.length > data.length){
-            // @ts-ignore
-            setData([...props.list]);
-        }
-        console.log(editData)
-    },[data, props.list,editData])
+    },[data, list, editData])
 
-
+    const tableOptions = {
+        height: "100%",
+        pagination: "local",
+        paginationSize: 10,
+        movableColumns: false,
+        resizableRows:false,
+        renderHorizontal:"virtual",
+        maxHeight: '100%',
+        maxWidth: '100%',
+        placeholder:"No Data Available",
+    };
 
     return (
-        <Card bg='white' marginTop={'50px'}  marginLeft={'50px'} marginRight={'50px'} maxH={'750px'}>
+        <Card bg='#666666' marginTop={'50px'}  marginLeft={'50px'} marginRight={'50px'} maxH={'750px'}>
+            <CardHeader>
+                <Flex justify={'end'}>
+                    <IconButton icon={<AddIcon/>} aria-label={'Add Button'}/>
+                </Flex>
+            </CardHeader>
             <CardBody>
-                <CardHeader>
-                    <Flex justify={'end'}>
-                        <IconButton icon={<AddIcon/>} aria-label={'Add Button'}/>
-                    </Flex>
-                </CardHeader>
-                <Skeleton isLoaded={data !== null}>
-                    <TableContainer overflow={'auto'} scrollBehavior='smooth'>
-                        <Table variant='simple' size={'sm'}>
-                            <TableCaption>{caption}</TableCaption>
-                            <Thead>
-                                <Tr>
-                                    {(Object.keys(filterValues).length > 0) && (
-                                        (Object.entries(data[0]).map(([key]) => (
-                                            ((key !== 'id' && key !== '__typename') &&
-                                                <Th key={key}>
-                                                    <Text>
-                                                        {key}
-                                                    </Text>
-
-                                                    <Input
-                                                        name={key}
-                                                        value={filterValues[`${key}`]}
-                                                        onChange={handleFilterChange}
-                                                    />
-                                                </Th>
-                                            )
-                                        )))
-                                    )}
-                                    <Th  key={'action'}>
-                                        Actions
-                                    </Th>
-                                </Tr>
-                            </Thead>
-                            {(data.length === 0) ? (
-                                    <Tbody>
-                                        <Tr>
-                                            <Td style={{textAlign: 'center'}} colSpan={Object.keys(filterValues).length}>{noDataMessage}</Td>
-                                        </Tr>
-                                    </Tbody>
-                                )
-                                :
-                                (filteredData.length > 0 ? (
-                                        <Tbody>
-                                            {filteredData.map((bodyContent: any) => (
-                                                <Tr key={bodyContent.id}>
-                                                    {Object.entries(bodyContent).map(([key, value]: [any,any]) => (
-                                                        ((key !== 'id' && key !== '__typename')  && <Td style={{textAlign: 'center'}} key={key}>{value.toString().trim()}</Td>)
-                                                    ))}
-                                                    <Td key={'actions'}>
-                                                        <ButtonGroup justifyContent='center' padding='5px'>
-                                                            <IconButton aria-label='Edit' icon={<EditIcon />}  onClick={() => editRow(bodyContent)}/>
-                                                            <IconButton aria-label='Delete' icon={<DeleteIcon />} />
-                                                        </ButtonGroup>
-                                                    </Td>
-                                                </Tr>
-                                            ))}
-                                        </Tbody>
-                                    )
-                                    :
-                                    ((filteredData.length === 0 && Object.values(filterValues).some(v => v !== "")) ? (
-                                                <Tbody>
-                                                    <Tr>
-                                                        <Td style={{textAlign: 'center'}} colSpan={Object.keys(filterValues).length}>{'No valid data matching query'}</Td>
-                                                    </Tr>
-                                                </Tbody>
-                                            ):
-                                            (
-                                                <Tbody>
-                                                    {data.map((bodyContent:any) => (
-                                                        <Tr key={bodyContent.id}>
-                                                            {Object.entries(bodyContent).map(([key, value]: [any,any]) => (
-                                                                ((key !== 'id' && key !== '__typename') && <Td style={{textAlign: 'center'}} key={key}>{value.toString().trim()}</Td>)
-                                                            ))}
-                                                            <Td key={'actions'}>
-                                                                <ButtonGroup justifyContent='center' padding='5px'>
-                                                                    <IconButton aria-label='Edit' icon={<EditIcon />}  onClick={() => editRow(bodyContent)}/>
-                                                                    <IconButton aria-label='Delete' icon={<DeleteIcon />} />
-                                                                </ButtonGroup>
-                                                            </Td>
-                                                        </Tr>
-                                                    ))}
-                                                </Tbody>
-                                            )
-                                    ))}
-                            <Tfoot>
-                            </Tfoot>
-                        </Table>
-                    </TableContainer>
-                </Skeleton>
+                {data.length &&
+                    <Box height={'100%'}>
+                        {columns.length > 0 &&
+                            <ReactTabulator
+                                data={data}
+                                columns={columns}
+                                renderHorizontal={'virtual'}
+                                options={tableOptions}
+                                layout={"fitData"}
+                            />
+                        }
+                    </Box>
+                }
             </CardBody>
             <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={closeModal}>
                 <ModalOverlay />

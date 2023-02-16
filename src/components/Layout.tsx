@@ -14,13 +14,13 @@ function Layout ({ children }:any)  {
             {
                 y: 0,
                 autoAlpha: 0,
-                fadeOut: 'power1',
+                ease: 'power3.In',
             },
             {
                 y: 0,
                 autoAlpha: 1,
                 duration: 0.5,
-                fadeOut: 'power1',
+                ease: 'power3.In',
             }
         )
     }
@@ -30,13 +30,13 @@ function Layout ({ children }:any)  {
             {
                 y: 0,
                 autoAlpha: 1,
-                fadeIn: 'power1',
+                ease: 'power3.inOut',
             },
             {
                 y: 0,
                 autoAlpha: 0,
                 duration: 0.5,
-                fadeIn: 'power1',
+                ease: 'power3.inOut',
             }
         )
     }
@@ -64,9 +64,8 @@ function Layout ({ children }:any)  {
                         <main>
                             <Flex
                                 minH={'100vh'}
-                                align={'baseline'}
-                                justify={'center'}
-                                bg={useColorModeValue('background.800', 'background.50')}>
+                                align={'stretch'}
+                                bg={useColorModeValue('#131517', 'background.50')}>
                                 {children}
                             </Flex>
                         </main>

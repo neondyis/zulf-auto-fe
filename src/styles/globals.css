@@ -1,0 +1,25 @@
+.tabulator-header-contents {
+    overflow: hidden;
+}
+
+.tabulator-tableholder::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+    background-color: #F5F5F5;
+}
+
+.tabulator-tableholder::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgb(0 0 0 / 30%);
+    border-radius: 10px;
+    background-color: #222222;
+}
+
+.tabulator-tableholder::-webkit-scrollbar {
+    border-radius: 10px;
+    background-color: #222222;
+}
+
+.tabulator {
+    border-radius: 15px !important;
+    border: thin #222222 solid !important;
+}
