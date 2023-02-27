@@ -39,10 +39,10 @@ export function AuthProvider({ children} : AuthProviderProps ): JSX.Element {
                 // @ts-ignore
                 if(res.data === "Valid"){
                     setIsLoaded(true);
-                    setIsAuthenticated(true)
+                    setIsAuthenticated(true);
                 }else{
                     setIsLoaded(false);
-                    setIsAuthenticated(false)
+                    setIsAuthenticated(false);
                 }
             }).catch(err =>
                 console.error(err)
@@ -50,7 +50,7 @@ export function AuthProvider({ children} : AuthProviderProps ): JSX.Element {
         };
         if (token) {
             validateToken().then(() => {
-                console.log('validated token')
+                console.log('validated token');
             });
         } else {
             setIsLoaded(true);
@@ -60,7 +60,7 @@ export function AuthProvider({ children} : AuthProviderProps ): JSX.Element {
     // function to update the token
     function updateToken(newToken:  string | null) {
         setToken(newToken);
-        localStorage.setItem('token', JSON.stringify(newToken))
+        localStorage.setItem('token', JSON.stringify(newToken));
     }
 
     // create an object with the token and updateToken function

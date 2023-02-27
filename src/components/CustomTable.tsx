@@ -1,147 +1,75 @@
-import {SetStateAction, useEffect, useState} from "react";
+import {ChangeEvent, useEffect, useRef, useState} from "react";
 import {
-    Box,
-    Button,
+    Box, Button,
     Card,
     CardBody,
     CardHeader,
-    Flex,
-    FormControl,
-    FormErrorMessage,
-    FormLabel,
-    IconButton,
-    Input,
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
+    Flex, FormControl, FormErrorMessage, FormLabel, Text,
+    IconButton, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay,
     useDisclosure,
     useToast
 } from "@chakra-ui/react";
-import {AddIcon, DeleteIcon, EditIcon} from "@chakra-ui/icons";
+import {AddIcon, EditIcon} from "@chakra-ui/icons";
 import {ReactTabulator} from 'react-tabulator';
 import {Tabulator} from 'react-tabulator/lib/types/TabulatorTypes';
 import ColumnDefinition = Tabulator.ColumnDefinition;
 import "react-tabulator/lib/styles.css";
 import "react-tabulator/css/tabulator_midnight.min.css";
+import CellComponent = Tabulator.CellComponent;
+import axios from 'axios';
 
 type TableProps<T> = {
-    message: string;
-    caption: string;
+    tableType: string;
     list: T[]
 }
 
 export const CustomTable = ({...props}: TableProps<Object>) => {
-    const {caption, message, list} = props;
+    const {tableType, list} = props;
     const [data, setData] = useState([]); // initial data for the table
-    const [editData, setEditData] = useState({});
-    const [filteredData, setFilteredData] = useState([...data]); // filtered data for the table
-    const [filterValues, setFilterValues] = useState({});
+    const [editData, setEditData] = useState<Map<number, Object>>(new Map);
     const {isOpen, onOpen, onClose} = useDisclosure();
-    const [columns, setColumns] = useState<ColumnDefinition[]>([])
+    const [columns, setColumns] = useState<ColumnDefinition[]>([]);
     const toast = useToast();
+    let tableRef = useRef<any>();
 
     const closeModal = () => {
-        setEditData({});
+        // tableRef.current.clearCellEdited();
         onClose();
     };
 
     const copyKeys = async (obj: Object, newObj: Object) => {
         const tempColumns: ColumnDefinition[] = [];
-        Object.assign(newObj, Object.keys(obj).reduce((result:Object, key) => {
-            if(key !=='__typename'){
+        Object.assign(newObj, Object.keys(obj).reduce((result: Object, key) => {
+            if (key !== '__typename') {
                 // @ts-ignore
                 result[key] = "";
                 tempColumns.push({
-                    title: key, field: key, hozAlign: "center",
-                    headerFilter: "input", resizable:false, minWidth:200,
-                    cellClick:function (e,cell){editRow(cell.getData())}})
-                console.log(key)
+                    title: key, field: key, hozAlign: "center", headerHozAlign: "center",
+                    headerFilter: "input", resizable: false, minWidth: 200,
+                    editor: "input", editable: editCheck
+                    // Adding cell on click function action
+                    // cellClick:function (e,cell){editRow(cell.getData())}
+                });
                 return result;
-            }else{
+            } else {
                 return result;
             }
         }, {}));
         setColumns(tempColumns);
-    }
-    const handleFilterChange = (event:any) => {
-        const { name, value } = event.target;
-
-        setFilterValues({
-            ...filterValues,
-            [name]: value,
-        });
-        // // Filter the data based on the filter values
-        if(value === ""){
-            setFilteredData(data)
-        }else {
-            const newFilteredData = data.filter((item) =>
-                Object.keys(filterValues).every((key) => {
-                    // @ts-ignore
-                    const filterValue = filterValues[key];
-                    const itemValue = item[key];
-                    // @ts-ignore
-                    return filterValue === "" || itemValue.toString().toLowerCase().includes(filterValue.toString().toLowerCase());
-                })
-            );
-            setFilteredData(newFilteredData);
-        }
     };
 
-    const handleSubmit = (event:any) => {
-        event.preventDefault();
-    };
-
-    const handleChange = (event:any) => {
-        const {name, value} = event.target;
-        setEditData((prevState) => {
-            return({
-                ...prevState,
-                [name]: value
-            })
-        });
-    };
-
-    const editRow = (rowData: any) => {
-        console.log(rowData)
-        setEditData({...rowData});
-        onOpen();
-    };
-
-    const deleteRow = (id: number) => {
-        console.log(id)
-        // deleteHandler({
-        //     variables: {
-        //         id: id
-        //     }
-        // }).then(e => {
-        //     setData(prevState => {
-        //         prevState = prevState.filter((row) => {
-        //             return row.id !== id;
-        //         })
-        //         return prevState;
-        //     })
-        //     toast({
-        //         title: 'Client deleted.',
-        //         description: "Client data successfully deleted.",
-        //         status: 'success',
-        //         duration: 2000,
-        //         isClosable: true,
-        //     })
-        // })
+    const editCheck = (cell: CellComponent): boolean => {
+        return cell.getField() !== 'id';
     };
 
     const update = () => {
-            toast({
-                title: 'Client updated.',
-                description: "Client data updated successfully.",
-                status: 'success',
-                duration: 2000,
-                isClosable: true,
-            })
+        toast({
+            title: 'Client updated.',
+            description: "Client data updated successfully.",
+            status: 'success',
+            duration: 2000,
+            isClosable: true,
+        });
         // updateHandler({
         //     variables: {
         //         _eq: editData.id,
@@ -161,37 +89,66 @@ export const CustomTable = ({...props}: TableProps<Object>) => {
         //     setData(e.data.update_clients.returning)
 
         // })
-    }
+    };
 
     useEffect(() => {
         const filterKeys = {};
-        if(data.length > 0){
-            copyKeys(data[0],filterKeys).then(() => {
-                setFilterValues(filterKeys);
+        if (data.length > 0 && columns.length == 0) {
+            copyKeys(data[0], filterKeys).then(() => {
+                console.log("Copied dynamic keys for table");
             });
         }
-        if(list.length > 0 && data.length === 0){
+        if (list.length > 0 && data.length === 0) {
             // @ts-ignore
             setData([...list]);
         }
-    },[data, list, editData])
+    }, [data, list]);
 
     const tableOptions = {
         height: "100%",
         pagination: "local",
         paginationSize: 10,
-        movableColumns: false,
-        resizableRows:false,
-        renderHorizontal:"virtual",
+        movableColumns: true,
+        resizableRows: false,
+        renderHorizontal: "virtual",
         maxHeight: '100%',
-        placeholder:"No Data Available",
+        placeholder: "No Data Available",
+    };
+    const getEditedCells = async (cell: CellComponent) => {
+        const id = cell.getRow().getCell('id').getValue();
+        const editedObjects: {} = {...editData.get(id), [`${cell.getField()}`]: cell.getValue()};
+        setEditData((prevState: Map<number, Object>) => {
+            return prevState.set(id, editedObjects);
+        });
+    };
+
+    const confirmEditing = () => {
+        onOpen();
+    };
+
+    const handleEditSubmit = async () => {
+        let updateData = [];
+        // @ts-ignore
+        for(let [key,value] of editData.entries()){
+            updateData.push({id:key, ...value});
+        }
+        
+        console.log(updateData);
+        await axios.put('http://localhost:8080/api/cars/update/bulk', updateData).then(res => {
+            console.log(res);
+        });
+    };
+
+    const handleChange = (key: string, e: ChangeEvent<HTMLInputElement>) => {
+        // setEditData({[key]: e.target.value})
     };
 
     return (
         <Card bg='#666666' marginTop={'50px'}  marginLeft={'50px'} marginRight={'50px'} maxH={'750px'}>
             <CardHeader>
-                <Flex justify={'end'}>
+                <Flex justify={'end'} gap={2}>
                     <IconButton icon={<AddIcon/>} aria-label={'Add Button'}/>
+                    <Button leftIcon={<EditIcon/>} aria-label={'Confirm Edit Button'} onClick={confirmEditing} >Confirm Edit</Button>
                 </Flex>
             </CardHeader>
             <CardBody>
@@ -202,39 +159,43 @@ export const CustomTable = ({...props}: TableProps<Object>) => {
                                 data={data}
                                 columns={columns}
                                 renderHorizontal={'virtual'}
+                                reactiveData={true}
                                 options={tableOptions}
                                 layout={"fitData"}
+                                events={{cellEdited: getEditedCells}}
+                                onRef={ref => {tableRef = ref;}}
                             />
                         }
                     </Box>
                 }
             </CardBody>
-            <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={closeModal}>
+            <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={closeModal} scrollBehavior={'inside'}>
                 <ModalOverlay />
                 <ModalContent>
                     <ModalHeader>Edit</ModalHeader>
                     <ModalCloseButton />
+
                     <ModalBody pb={6}>
-                        <form onSubmit={handleSubmit} id='edit-row-form'>
+                        <form id='edit-row-form'>
                             {editData &&
-                                data.map((bodyContent:any) => (
-                                    <div key={bodyContent.id}>
-                                        {Object.entries(bodyContent).map(([key, value]:[any,any]) => (
-                                            ((key !== 'id' && key !== '__typename')  &&
-                                                <FormControl key={key} variant="floating" isRequired>
-                                                    <FormLabel htmlFor={key}>
-                                                        {key.replaceAll('_', ' ')}
-                                                    </FormLabel>
-                                                    <Input
-                                                        id={key}
-                                                        name={key}
-                                                        placeholder={key}
-                                                        value={editData[key]}
-                                                        onChange={handleChange}
-                                                    />
-                                                    <FormErrorMessage>Your input is invalid</FormErrorMessage>
-                                                </FormControl>
-                                            )
+                                Array.from(editData).map(([key,data]) => (
+                                    <div key={key}>
+                                        <Text>{tableType} - {key}</Text>
+                                        {Object.entries(data).map(([dataKey, dataValue]:[string,any]) => (
+                                            <FormControl  key={dataKey} variant="floating">
+                                                <FormLabel htmlFor={dataKey}>
+                                                    {dataKey.replaceAll('_', ' ')}
+                                                </FormLabel>
+                                                <Input
+                                                    id={dataKey}
+                                                    name={dataKey}
+                                                    placeholder={dataKey}
+                                                    value={dataValue}
+                                                    readOnly={true}
+                                                    // onChange={e => handleChange(key,e)}
+                                                />
+                                                <FormErrorMessage>Your input is invalid</FormErrorMessage>
+                                            </FormControl>
                                         ))}
                                     </div>
                                 ))
@@ -242,7 +203,7 @@ export const CustomTable = ({...props}: TableProps<Object>) => {
                         </form>
                     </ModalBody>
                     <ModalFooter>
-                        <Button colorScheme='blue' mr={3} onClick={update}>
+                        <Button colorScheme='blue' mr={3} onClick={handleEditSubmit}>
                             Save
                         </Button>
                         <Button onClick={onClose}>Cancel</Button>
@@ -250,5 +211,5 @@ export const CustomTable = ({...props}: TableProps<Object>) => {
                 </ModalContent>
             </Modal>
         </Card>
-    )
-}
+    );
+};
